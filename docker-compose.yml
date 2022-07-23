@@ -1,0 +1,74 @@
+version: "3.7"
+
+services:
+    # image project
+    app:
+        container_name: laravelchat-app
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: laravel/laravelchat-app
+        restart: unless-stopped
+        working_dir: /var/www/
+        volumes:
+            - ./:/var/www
+        # depends_on: 
+        #     - redis
+        networks: 
+            - localnetwork
+    
+    # nginx
+    nginx:
+        container_name: laravelchat-nginx
+        image: nginx:alpine
+        restart: unless-stopped
+        ports: 
+            - "8989:80"
+            - "6001:6001"
+        volumes: 
+            - ./:/var/www
+            - ./docker/nginx/:/etc/nginx/conf.d/
+        networks: 
+            - localnetwork
+
+    # db mysql
+    mysql:
+        container_name: laravelchat-mysql
+        image: mysql:5.7.22
+        restart: unless-stopped
+        environment: 
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_USER: ${DB_USERNAME}
+        volumes: 
+            - ./.docker/mysql/dbdata:/var/lib/mysql
+        ports: 
+            - "3388:3306"
+        networks: 
+            - localnetwork
+
+    # queue
+    # queue:
+    #     container_name: laravelchat-queue
+    #     image: laravel/laravelchat-app
+    #     restart: unless-stopped
+    #     command: "php artisan queue:work"
+    #     volumes: 
+    #         - ./:/var/www
+    #     depends_on: 
+            # - redis
+    #         - app
+    #     networks: 
+    #         - localnetwork
+
+    # redis
+    # redis:
+    #     container_name: laravelchat-redis
+    #     image: redis:latest
+    #     networks: 
+    #         - localnetwork
+
+networks: 
+    localnetwork:
+        driver: bridge
